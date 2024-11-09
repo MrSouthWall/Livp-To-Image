@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LivpToJpeg 提取工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <style>
+        /* 页面样式 */
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #eef2f3;
+            /* 背景色 */
+        }
+
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+            /* 最大宽度 */
+            border-radius: 10px;
+            /* 圆角 */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            /* 阴影效果 */
+            background-color: white;
+            /* 背景色 */
+            padding: 20px;
+            /* 内边距 */
+            padding-top: 0px;
+            /* 顶部边距为 0 */
+        }
+
+        .update-log {
+            text-align: left;
+        }
+
+        h1 {
+            /* margin-bottom: 20px; */
+            font-size: 24px;
+            /* 标题字号 */
+            color: #333;
+            /* 字体颜色 */
+        }
+
+        .drop-zone {
+            width: 100%;
+            height: 200px;
+            border: 2px dashed #ccc;
+            /* 边框颜色 */
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #ccc;
+            /* 字体颜色 */
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+            background-color: #f9f9f9;
+            /* 背景色 */
+        }
+
+        .drop-zone.dragover {
+            background-color: #e7f3ff;
+            /* 拖拽时背景色 */
+            border-color: #007bff;
+            /* 拖拽时边框颜色 */
+        }
+
+        .small-light-gray-text {
+            font-size: 12px;
+            /* 小字号 */
+            color: #a0a0a0;
+            /* 浅灰色 */
+        }
+
+        #output {
+            max-height: 500px;
+            /* 增加最大高度 */
+            overflow-y: auto;
+            /* 允许垂直滚动 */
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            /* 自适应列数 */
+            gap: 10px;
+            /* 列间距 */
+            justify-items: center;
+            /* 居中 */
+            padding: 10px;
+            /* 内边距 */
+            border-radius: 5px;
+            /* 圆角 */
+            background-color: #f1f1f1;
+            /* 背景色 */
+            border: 1px solid #ddd;
+            /* 边框 */
+        }
+
+        .thumbnail {
+            width: 100%;
+            /* 缩略图宽度 */
+            height: 100%;
+            /* 缩略图宽度 */
+            max-width: 100px;
+            /* 最大宽度 */
+            max-height: 100px;
+            /* 最大高度 */
+            min-height: 100px;
+            /* 最小高度 */
+            border: 1px solid #ccc;
+            /* 边框样式 */
+            border-radius: 5px;
+            /* 圆角 */
+            overflow: hidden;
+            /* 超出部分隐藏 */
+            background-color: white;
+            /* 背景色 */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            /* 阴影效果 */
+            transition: transform 0.2s;
+            /* 动画效果 */
+            cursor: pointer;
+            /* 鼠标指针变为手形 */
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+            /* 悬停效果 */
+        }
+
+        .thumbnail img {
+            width: 100%;
+            /* 图片宽度 */
+            height: 100%;
+            /* 高度自适应 */
+            object-fit: cover;
+            /* 保持图片比例 */
+        }
+
+        #downloadAll {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007bff;
+            /* 按钮颜色 */
+            border: none;
+            border-radius: 5px;
+            /* 圆角 */
+            cursor: pointer;
+            /* 鼠标指针变为手形 */
+        }
+
+        #downloadAll:hover {
+            background-color: #0056b3;
+            /* 悬停时按钮颜色 */
+        }
+
+        /* 去掉链接的下划线 */
+        a.no-underline {
+            text-decoration: none;
+            color: #a0a0a0;
+            /* 设置链接的默认颜色 */
+        }
+
+        /* 设置鼠标悬停时的颜色 */
+        a.no-underline:hover {
+            color: black;
+            /* 设置鼠标悬停时的颜色 */
+        }
+
+        /* 右下角的标签样式 */
+        .github-tag {
+            position: fixed;
+            /* 固定在页面右下角 */
+            bottom: 20px;
+            right: 20px;
+            background-color: #24292f;
+            /* GitHub 深色背景 */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-size: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s;
+            display: flex;
+            /* 使用 flexbox */
+            align-items: center;
+            /* 垂直居中 */
+        }
+
+        .github-tag:hover {
+            background-color: #5a5a5a;
+            /* 鼠标悬停时的背景颜色 */
+        }
+
+        /* 设置 GitHub 图标 */
+        .github-tag img {
+            width: 20px;
+            /* 图标大小 */
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+
+        /* 底部免费提示 */
+        .center-button-tips {
+            position: fixed;
+            /* 固定在页面底部 */
+            bottom: 8px;
+            font-size: 12px;
+            /* 小字号 */
+            color: #a0a0a0;
+            /* 浅灰色 */
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>从 LIVP 批量提取 JPEG 工具</h1>
+        <p class="small-light-gray-text">
+            ♥︎ Made by <a href="https://github.com/MrSouthWall" class="no-underline" target="_blank">MrSouthWall</a> for
+            Ms. Chen ♥︎
+        </p>
+        <div id="dropZone" class="drop-zone">
+            将一个或多个 .livp 文件拖拽到此区域
+        </div>
+        <p class="small-light-gray-text">
+            Tips: 批量处理大量文件时，可能会卡住一会，稍等一会即可。
+        </p>
+        <div id="output"></div>
+        <button id="downloadAll">下载所有图片</button>
+
+    </div>
+
+    <!-- 底部的免费提示 -->
+    <p class="center-button-tips">
+        请注意：本工具完全免费、开源！
+    </p>
+
+    <!-- 右下角的 GitHub 标签 -->
+    <a href="https://github.com/MrSouthWall" class="github-tag" target="_blank">
+        <img src="images/github-mark-white.svg" alt="GitHub Logo">
+        MrSouthWall
+    </a>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const output = document.getElementById('output');
+        const downloadAllButton = document.getElementById('downloadAll');
+        let jpegFiles = []; // 存储所有 JPEG 文件的信息，包括 URL 和文件名
+
+        // 拖拽文件到指定区域
+        dropZone.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = event.dataTransfer.files;
+            extractJpegs(files);
+        });
+
+        // 提取 JPEG 文件的函数
+        async function extractJpegs(files) {
+            const outputThumbnails = []; // 用于存储所有缩略图的 DOM 元素
+            const promises = []; // 用于存储所有的提取 Promise
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const zip = new JSZip();
+
+                promises.push(
+                    (async () => {
+                        try {
+                            const zipContent = await zip.loadAsync(file);
+                            let jpegFound = false;
+
+                            for (const [filename, fileData] of Object.entries(zipContent.files)) {
+                                if (filename.endsWith('.jpeg') || filename.endsWith('.jpg')) {
+                                    jpegFound = true;
+                                    const jpegData = await fileData.async('blob');
+                                    const jpegURL = URL.createObjectURL(jpegData);
+                                    jpegFiles.push({ url: jpegURL, name: filename }); // 保存 JPEG URL 和文件名
+
+                                    // 创建缩略图
+                                    const thumbnail = document.createElement('div');
+                                    thumbnail.classList.add('thumbnail');
+                                    thumbnail.addEventListener('click', () => downloadImage(jpegURL, filename));
+                                    const img = document.createElement('img');
+                                    img.src = jpegURL;
+                                    thumbnail.appendChild(img);
+                                    outputThumbnails.push(thumbnail);
+                                }
+                            }
+
+                            if (!jpegFound) {
+                                const noJpegMsg = document.createElement('p');
+                                noJpegMsg.textContent = `未在 ${file.name} 中找到 JPEG 文件`;
+                                output.appendChild(noJpegMsg);
+                            }
+                        } catch (err) {
+                            console.error(`解压 ${file.name} 失败`, err);
+                            const errorMsg = document.createElement('p');
+                            errorMsg.textContent = `无法处理 ${file.name}`;
+                            output.appendChild(errorMsg);
+                        }
+                    })()
+                );
+            }
+
+            // 等待所有提取完成后，批量插入缩略图
+            Promise.all(promises).then(() => {
+                outputThumbnails.forEach(thumbnail => output.appendChild(thumbnail));
+            });
+        }
+
+        // 下载单个 JPEG 图片的函数
+        function downloadImage(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();  // 自动触发下载
+            document.body.removeChild(link);
+        }
+
+        // 一键下载所有 JPEG 图片为 ZIP 文件
+        downloadAllButton.addEventListener('click', async () => {
+            const zip = new JSZip();
+
+            jpegFiles.forEach(file => {
+                zip.file(file.name, fetch(file.url).then(response => response.blob())); // 添加文件到 ZIP
+            });
+
+            const content = await zip.generateAsync({ type: 'blob' });
+            const zipURL = URL.createObjectURL(content);
+
+            // 创建下载链接并触发下载
+            const link = document.createElement('a');
+            link.href = zipURL;
+            link.download = 'images.zip'; // ZIP 文件名称
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    </script>
+</body>
+
+</html>
