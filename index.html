@@ -227,30 +227,30 @@
 
 <body>
     <div class="container">
-        <h1>从 LIVP 批量提取 JPEG 工具</h1>
+        <h1>从 LIVP 批量提取 JPEG / HEIC 工具</h1>
+
         <p class="small-light-gray-text">
-            ♥︎ Made by <a href="https://github.com/MrSouthWall" class="no-underline" target="_blank">MrSouthWall</a> for
-            Ms. Chen ♥︎
+            ♥︎ Made by <a href="https://github.com/MrSouthWall" class="no-underline" target="_blank">MrSouthWall</a> for Ms. Chen ♥︎
         </p>
+
         <div id="dropZone" class="drop-zone">
             将一个或多个 .livp 文件拖拽到此区域
         </div>
+
         <p class="small-light-gray-text">
             Tips: 批量处理大量文件时，可能会卡住一会，稍等一会即可。
         </p>
-        <div id="output"></div>
-        <button id="downloadAll">下载所有图片</button>
 
+        <div id="output"></div>
+
+        <button id="downloadAll">下载全部图片</button>
     </div>
 
-    <!-- 底部的免费提示 -->
-    <p class="center-button-tips">
-        请注意：本工具完全免费、开源！
-    </p>
+    <p class="center-button-tips">请注意：本工具完全免费、开源！</p>
 
-    <!-- 右下角的 GitHub 标签 -->
     <a href="https://github.com/MrSouthWall/LivpToJpeg" class="github-tag" target="_blank">
-        <img src="https://raw.githubusercontent.com/MrSouthWall/LivpToJpeg/e59e6292c2b6377d320435b7250d9735a74d2080/images/github-mark-white.svg" alt="GitHub Logo">
+        <img src="https://raw.githubusercontent.com/MrSouthWall/LivpToJpeg/e59e6292c2b6377d320435b7250d9735a74d2080/images/github-mark-white.svg"
+            alt="GitHub Logo">
         GitHub
     </a>
 
@@ -258,9 +258,8 @@
         const dropZone = document.getElementById('dropZone');
         const output = document.getElementById('output');
         const downloadAllButton = document.getElementById('downloadAll');
-        let jpegFiles = []; // 存储所有 JPEG 文件的信息，包括 URL 和文件名
+        let extractedFiles = [];
 
-        // 拖拽文件到指定区域
         dropZone.addEventListener('dragover', (event) => {
             event.preventDefault();
             dropZone.classList.add('dragover');
@@ -274,13 +273,12 @@
             event.preventDefault();
             dropZone.classList.remove('dragover');
             const files = event.dataTransfer.files;
-            extractJpegs(files);
+            extractImages(files);
         });
 
-        // 提取 JPEG 文件的函数
-        async function extractJpegs(files) {
-            const outputThumbnails = []; // 用于存储所有缩略图的 DOM 元素
-            const promises = []; // 用于存储所有的提取 Promise
+        async function extractImages(files) {
+            const outputThumbnails = [];
+            const promises = [];
 
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
@@ -290,30 +288,29 @@
                     (async () => {
                         try {
                             const zipContent = await zip.loadAsync(file);
-                            let jpegFound = false;
+                            let imageFound = false;
 
                             for (const [filename, fileData] of Object.entries(zipContent.files)) {
-                                if (filename.endsWith('.jpeg') || filename.endsWith('.jpg')) {
-                                    jpegFound = true;
-                                    const jpegData = await fileData.async('blob');
-                                    const jpegURL = URL.createObjectURL(jpegData);
-                                    jpegFiles.push({ url: jpegURL, name: filename }); // 保存 JPEG URL 和文件名
+                                if (filename.endsWith('.jpeg') || filename.endsWith('.jpg') || filename.endsWith('.heic')) {
+                                    imageFound = true;
+                                    const imageData = await fileData.async('blob');
+                                    const imageURL = URL.createObjectURL(imageData);
+                                    extractedFiles.push({ url: imageURL, name: filename });
 
-                                    // 创建缩略图
                                     const thumbnail = document.createElement('div');
                                     thumbnail.classList.add('thumbnail');
-                                    thumbnail.addEventListener('click', () => downloadImage(jpegURL, filename));
+                                    thumbnail.addEventListener('click', () => downloadImage(imageURL, filename));
                                     const img = document.createElement('img');
-                                    img.src = jpegURL;
+                                    img.src = imageURL;
                                     thumbnail.appendChild(img);
                                     outputThumbnails.push(thumbnail);
                                 }
                             }
 
-                            if (!jpegFound) {
-                                const noJpegMsg = document.createElement('p');
-                                noJpegMsg.textContent = `未在 ${file.name} 中找到 JPEG 文件`;
-                                output.appendChild(noJpegMsg);
+                            if (!imageFound) {
+                                const noImageMsg = document.createElement('p');
+                                noImageMsg.textContent = `未在 ${file.name} 中找到 JPEG 或 HEIC 文件`;
+                                output.appendChild(noImageMsg);
                             }
                         } catch (err) {
                             console.error(`解压 ${file.name} 失败`, err);
@@ -325,37 +322,33 @@
                 );
             }
 
-            // 等待所有提取完成后，批量插入缩略图
             Promise.all(promises).then(() => {
                 outputThumbnails.forEach(thumbnail => output.appendChild(thumbnail));
             });
         }
 
-        // 下载单个 JPEG 图片的函数
         function downloadImage(url, filename) {
             const link = document.createElement('a');
             link.href = url;
             link.download = filename;
             document.body.appendChild(link);
-            link.click();  // 自动触发下载
+            link.click();
             document.body.removeChild(link);
         }
 
-        // 一键下载所有 JPEG 图片为 ZIP 文件
         downloadAllButton.addEventListener('click', async () => {
             const zip = new JSZip();
 
-            jpegFiles.forEach(file => {
-                zip.file(file.name, fetch(file.url).then(response => response.blob())); // 添加文件到 ZIP
+            extractedFiles.forEach(file => {
+                zip.file(file.name, fetch(file.url).then(response => response.blob()));
             });
 
             const content = await zip.generateAsync({ type: 'blob' });
             const zipURL = URL.createObjectURL(content);
 
-            // 创建下载链接并触发下载
             const link = document.createElement('a');
             link.href = zipURL;
-            link.download = 'images.zip'; // ZIP 文件名称
+            link.download = 'images.zip';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
