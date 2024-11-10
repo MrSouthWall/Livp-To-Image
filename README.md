@@ -12,7 +12,7 @@
 > **本工具 99% 的代码都由 ChatGPT 编写。**
 
 ## 使用方法
-- 前往 [LivpToJpeg 工具](https://mrsouthwall.github.io/LivpToJpeg/ "点击前往 LivpToJpeg 工具") 网页即可使用；
+- 前往 [LivpToJpeg 工具](https://mrsouthwall.github.io/LivpToImage/ "点击前往 LivpToImage 工具") 网页即可使用；
 - 下载本仓库的文件到本地，使用任意浏览器打开 `index.html` 文件即可；
 
 拖拽 .livp 文件到方框内，网页会自动进行提取，稍等片刻，就会显示缩略图。您可以通过「点击缩略图」进行单个图片的下载，也可点击「下载全部图片」按钮进行批量下载。
