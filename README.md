@@ -1,3 +1,10 @@
+
+## 预览
+
+<p align="left">
+  <img height="512" src="https://raw.githubusercontent.com/MrSouthWall/LivpToImage/refs/heads/main/README-Assets/PreviewImage.png">
+</p>
+
 ## 简介
 .livp 文件是苹果 iPhone 拍摄的 live 图格式，当我们解压缩 .livp，可以发现 .livp 文件实际上是由一个 jpeg / heic 和 mov 组成的，本工具就是帮您简单快捷地将 .livp 文件中的 jpeg / heic 提取出来。
 
