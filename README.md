@@ -2,7 +2,7 @@
 ## 预览
 
 <p align="left">
-  <img height="512" src="https://raw.githubusercontent.com/MrSouthWall/LivpToImage/refs/heads/main/README-Assets/PreviewImage.png">
+  <img height="400" src="https://raw.githubusercontent.com/MrSouthWall/LivpToImage/refs/heads/main/README-Assets/PreviewImage.png">
 </p>
 
 ## 简介
